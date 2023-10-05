@@ -1,0 +1,56 @@
+let src;
+let adaptiveThresholdImg;
+
+function setup() {
+  createCanvas(1000, 900);
+  
+  src = loadImage('img.png', () => {
+    // 이미지 로딩이 완료되면 Adaptive Thresholding 적용
+    adaptiveThresholdImg = createImage(src.width, src.height); // Adaptive Thresholding 결과 이미지 생성
+    src.loadPixels();
+    adaptiveThresholdImg.loadPixels();
+
+    // Adaptive Thresholding 적용
+    let blockSize = 3; // 블록 크기 조정
+    let C = 5; // C 값 조정
+    for (let x = 0; x < src.width; x++) {
+      for (let y = 0; y < src.height; y++) {
+        let sum = 0;
+        let count = 0;
+        for (let i = -blockSize; i < blockSize; i++) {
+          for (let j = -blockSize; j < blockSize; j++) {
+            let px = x + i;
+            let py = y + j;
+            if (px >= 0 && px < src.width && py >= 0 && py < src.height) {
+              let index = (px + py * src.width) * 4;
+              let gray = (src.pixels[index] + src.pixels[index + 1] + src.pixels[index + 2]) / 3;
+              sum += gray;
+              count++;
+            }
+          }
+        }
+        let index = (x + y * src.width) * 4;
+        let average = sum / count;
+        if (src.pixels[index] > average - C) {
+          adaptiveThresholdImg.pixels[index] = 200;
+          adaptiveThresholdImg.pixels[index + 1] = 200;
+          adaptiveThresholdImg.pixels[index + 2] = 200;
+        } else {
+          adaptiveThresholdImg.pixels[index] = 0;
+          adaptiveThresholdImg.pixels[index + 1] = 0;
+          adaptiveThresholdImg.pixels[index + 2] = 0;
+        }
+        adaptiveThresholdImg.pixels[index + 3] = 255;
+      }
+    }
+
+    adaptiveThresholdImg.updatePixels();
+    
+    textSize(25);
+    text('original',10,40);
+    text('Adaptive Thresholding',10,src.height+90);
+    
+    image(src, 0, 50); //원본 이미지 표시
+    image(adaptiveThresholdImg, 0, src.height+100); // Adaptive Thresholding 이미지 표시
+  });
+}
